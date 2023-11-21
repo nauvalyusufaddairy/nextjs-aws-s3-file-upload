@@ -32,16 +32,25 @@ export async function POST(req: NextRequest, res: NextResponse) {
   const byte = await file.arrayBuffer();
   const buffer = Buffer.from(byte);
 
-  const params = {};
-
-  await client
-    .send(
+  try {
+    const url = (url: string) => url;
+    const result = await client.send(
       new PutObjectCommand({
-        Bucket: "https://plaidpost.s3.amazonaws.com/blogapp/",
+        Bucket: "plaidpost",
+
         Body: buffer,
-        Key: file.name,
+        Key: "blogapp/" + file.name,
       })
-    )
-    .then((val) => new NextResponse(JSON.stringify(val), { status: 200 }))
-    .catch((err) => new NextResponse(JSON.stringify(err), { status: 500 }));
+    );
+    const normalizeFileUrl = file.name.replace(/\s+/g, "+");
+    return new NextResponse(
+      JSON.stringify({
+        result,
+        url: `https://plaidpost.s3.amazonaws.com/blogapp/${normalizeFileUrl}`,
+      }),
+      { status: 200 }
+    );
+  } catch (err) {
+    return new NextResponse(JSON.stringify({ err }), { status: 500 });
+  }
 }
